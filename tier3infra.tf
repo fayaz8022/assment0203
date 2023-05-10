@@ -123,4 +123,87 @@ resource "aws_eip" "nat2" {
 }
 
 resource "aws_nat_gateway" "nat1" {
-  allocation
+  allocation_id = aws_eip.nat1.id
+subnet_id = aws_subnet.public1.id
+
+tags = {
+Name = "example-nat1"
+}
+}
+
+resource "aws_nat_gateway" "nat2" {
+allocation_id = aws_eip.nat2.id
+subnet_id = aws_subnet.public2.id
+
+tags = {
+Name = "example-nat2"
+}
+}
+
+Create Security Groups
+resource "aws_security_group" "public" {
+vpc_id = aws_vpc.example.id
+
+ingress {
+from_port = 0
+to_port = 65535
+protocol = "tcp"
+cidr_blocks = ["0.0.0.0/0"]
+}
+
+tags = {
+Name = "example-public-sg"
+}
+}
+
+resource "aws_security_group" "private" {
+vpc_id = aws_vpc.example.id
+
+tags = {
+Name = "example-private-sg"
+}
+}
+
+Create EC2 Instances
+resource "aws_instance" "public" {
+ami = "ami-0c94855ba95c71c99"
+instance_type = "t2.micro"
+vpc_security_group_ids = [aws_security_group.public.id]
+subnet_id = aws_subnet.public1.id
+
+tags = {
+Name = "example-public-instance"
+}
+}
+
+resource "aws_instance" "private" {
+ami = "ami-0c94855ba95c71c99"
+instance_type = "t2.micro"
+vpc_security_group_ids = [aws_security_group.private.id]
+subnet_id = aws_subnet.private1.id
+
+tags = {
+Name = "example-private-instance"
+}
+}
+
+Output Variables
+output "vpc_id" {
+value = aws_vpc.example.id
+}
+
+output "public_subnet_ids" {
+value = [aws_subnet.public1.id, aws_subnet.public2.id]
+}
+
+output "private_subnet_ids" {
+value = [aws_subnet.private1.id, aws_subnet.private2.id]
+}
+
+output "public_instance_id" {
+value = aws_instance.public.id
+}
+
+output "private_instance_id" {
+value = aws_instance.private.id
+}
